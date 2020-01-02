@@ -18,6 +18,8 @@ from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 import logging
+from datetime import datetime
+import csv
 
 logging.basicConfig(
     format='%(asctime)s.%(msecs)03d %(levelname)-8s %(message)s',
@@ -66,104 +68,117 @@ variables = ["temperature",
              "pm25",
              "pm10"]
 
-values = {}
-
-for v in variables:
-    values[v] = [1] * WIDTH
+listeAlleVerdata = []
 
 # The main loop
 try:
     while True:
-        proximity = ltr559.get_proximity()
+        with open('data.csv', mode='w', newline='') as datafil: # mode='a' legg til nye data, 'w' skriv over
+            dataskriver = csv.writer(datafil)
+            
+            tidspunkt = datetime.now()
+            print("Tidspunkt:",tidspunkt)
 
-        # variable = "temperature"
-        unit = "C"
-        cpu_temp = get_cpu_temperature()
-        # Smooth out with some averaging to decrease jitter
-        cpu_temps = cpu_temps[1:] + [cpu_temp]
-        avg_cpu_temp = sum(cpu_temps) / float(len(cpu_temps))
-        raw_temp = bme280.get_temperature()
-        data = raw_temp - ((avg_cpu_temp - raw_temp) / factor)
-        #display_text(variables[mode], data, unit)
-        print(data,unit)
+            proximity = ltr559.get_proximity()
 
-        # variable = "pressure"
-        unit = "hPa"
-        data = bme280.get_pressure()
-        #display_text(variables[mode], data, unit)
-        print(data,unit)
-
-        # variable = "humidity"
-        unit = "%"
-        data = bme280.get_humidity()
-        #display_text(variables[mode], data, unit)
-        print(data,unit)
-
-        # variable = "light"
-        unit = "Lux"
-        if proximity < 10:
-            data = ltr559.get_lux()
-        else:
-            data = 1
-        #display_text(variables[mode], data, unit)
-        print(data,unit)
-
-        # variable = "oxidised"
-        unit = "kO"
-        data = gas.read_all()
-        data = data.oxidising / 1000
-        #display_text(variables[mode], data, unit)
-        print(data,unit)
-
-        # variable = "reduced"
-        unit = "kO"
-        data = gas.read_all()
-        data = data.reducing / 1000
-        #display_text(variables[mode], data, unit)
-        print(data,unit)
-
-        # variable = "nh3"
-        unit = "kO"
-        data = gas.read_all()
-        data = data.nh3 / 1000
-        #display_text(variables[mode], data, unit)
-        print(data,unit)
-
-        # variable = "pm1"
-        unit = "ug/m3"
-        try:
-            data = pms5003.read()
-        except pmsReadTimeoutError:
-            logging.warn("Failed to read PMS5003")
-        else:
-            data = float(data.pm_ug_per_m3(1.0))
+            # variable = "temperature"
+            unit = "C"
+            cpu_temp = get_cpu_temperature()
+            # Smooth out with some averaging to decrease jitter
+            cpu_temps = cpu_temps[1:] + [cpu_temp]
+            avg_cpu_temp = sum(cpu_temps) / float(len(cpu_temps))
+            raw_temp = bme280.get_temperature()
+            dataTemp = raw_temp - ((avg_cpu_temp - raw_temp) / factor)
             #display_text(variables[mode], data, unit)
-            print(data,unit)
+            print(dataTemp,unit)
 
-        # variable = "pm25"
-        unit = "ug/m3"
-        try:
-            data = pms5003.read()
-        except pmsReadTimeoutError:
-            logging.warn("Failed to read PMS5003")
-        else:
-            data = float(data.pm_ug_per_m3(2.5))
+            # variable = "pressure"
+            unit = "hPa"
+            dataTrykk = bme280.get_pressure()
             #display_text(variables[mode], data, unit)
-            print(data,unit)
+            print(dataTrykk,unit)
 
-        # variable = "pm10"
-        unit = "ug/m3"
-        try:
-            data = pms5003.read()
-        except pmsReadTimeoutError:
-            logging.warn("Failed to read PMS5003")
-        else:
-            data = float(data.pm_ug_per_m3(10))
+            # variable = "humidity"
+            unit = "%"
+            dataFukt = bme280.get_humidity()
             #display_text(variables[mode], data, unit)
-            print(data,unit)
+            print(dataFukt,unit)
+
+            # variable = "light"
+            unit = "Lux"
+            if proximity < 10:
+                dataProx = ltr559.get_lux()
+            else:
+                dataProx = 1
+            #display_text(variables[mode], data, unit)
+            print(dataProx,unit)
+
+            # variable = "oxidised"
+            unit = "kO"
+            dataGass = gas.read_all()
+            dataGass = dataGass.oxidising / 1000
+            #display_text(variables[mode], data, unit)
+            print(dataGass,unit)
+
+            # variable = "reduced"
+            unit = "kO"
+            dataGassReduced = gas.read_all()
+            dataGassReduced = dataGassReduced.reducing / 1000
+            #display_text(variables[mode], data, unit)
+            print(dataGassReduced,unit)
+
+            # variable = "nh3"
+            unit = "kO"
+            dataGassNH3 = gas.read_all()
+            dataGassNH3 = dataGassNH3.nh3 / 1000
+            #display_text(variables[mode], data, unit)
+            print(dataGassNH3,unit)
+
+            # variable = "pm1"
+            unit = "ug/m3"
+            try:
+                dataPM1 = pms5003.read()
+            except pmsReadTimeoutError:
+                logging.warn("Failed to read PMS5003")
+            else:
+                dataPM1 = float(dataPM1.pm_ug_per_m3(1.0))
+                #display_text(variables[mode], data, unit)
+                print(dataPM1,unit)
+
+            # variable = "pm25"
+            unit = "ug/m3"
+            try:
+                data = pms5003.read()
+            except pmsReadTimeoutError:
+                logging.warn("Failed to read PMS5003")
+            else:
+                data = float(data.pm_ug_per_m3(2.5))
+                #display_text(variables[mode], data, unit)
+                print(data,unit)
+
+            # variable = "pm10"
+            unit = "ug/m3"
+            try:
+                data = pms5003.read()
+            except pmsReadTimeoutError:
+                logging.warn("Failed to read PMS5003")
+            else:
+                data = float(data.pm_ug_per_m3(10))
+                #display_text(variables[mode], data, unit)
+                print(data,unit)
+        
+        # Sjoelve skrivinga
+        dataskriver.writerows(listeAlleVerdata)
+        print("Data er skrive til CSV-fil.")
+
+        # Sover 5 sek mellom kvar registrering
+        print("Ventar litt...")
+        time.sleep(5)        
+
 
 # Exit cleanly
 except KeyboardInterrupt:
+    print("Avsluttar...")
     sys.exit(0)
 
 '''
@@ -192,13 +207,13 @@ def registrerSaaLenge():
 registrerSaaLenge()
 
 '''
-Skrive verdata til CSV-fil, basert på listene frå funksjonen registrerSaaLenge()
+#Skrive verdata til CSV-fil, basert paa listene fraa funksjonen registrerSaaLenge()
 '''
 print("-------------------------")
 with open('data.csv', mode='w', newline='') as datafil: # mode='a' legg til nye data, 'w' skriv over
     dataskriver = csv.writer(datafil)
     dataskriver.writerows(listeAlleVerdata)
     print("Data er skrive til CSV-fil.")
-    #dataskriver.writerows([verdi] for verdi in listeTemperaturar) # Brukte denne når eg berre hadde tall (temperatur), ikkje tidskode. Skjønar ikkje kvifor det var nødvendig.
+    #dataskriver.writerows([verdi] for verdi in listeTemperaturar) # Brukte denne naar eg berre hadde tall (temperatur), ikkje tidskode. Skjoenar ikkje kvifor det var noedvendig.
 
 '''
